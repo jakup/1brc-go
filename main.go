@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
+	"math"
 	"os"
 	"sort"
 )
@@ -42,18 +42,15 @@ func parseLine(s string) (stationName string, measurement int16) {
 }
 
 func main() {
-	fh, err := os.Open("measurements.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer fh.Close()
-
 	var stations []string
 	results := make(map[string]*mma)
+
+	fh, _ := os.Open("measurements.txt")
+	defer fh.Close()
+
 	scanner := bufio.NewScanner(fh)
 	for scanner.Scan() {
-		s := scanner.Text()
-		stationName, measurement := parseLine(s)
+		stationName, measurement := parseLine(scanner.Text())
 		v, ok := results[stationName]
 		if !ok {
 			stations = append(stations, stationName)
@@ -75,17 +72,15 @@ func main() {
 			v.Count++
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		log.Printf("scanner: %v", err)
-	}
 
 	sort.Strings(stations)
 	prefix := "{"
 	for _, stationName := range stations {
 		m := results[stationName]
-		mean := float64(m.Sum) / float64(m.Count * 10)
 		fmt.Printf("%s%s=%.1f/%.1f/%.1f", prefix, stationName,
-			float64(m.Min)*0.1, mean, float64(m.Max)*0.1)
+			float64(m.Min)*0.1,
+			math.Round(float64(m.Sum)/float64(m.Count))*0.1,
+			float64(m.Max)*0.1)
 		prefix = ", "
 	}
 	fmt.Println("}")
