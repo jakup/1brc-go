@@ -4,10 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"sort"
 )
+
+type mma struct {
+	Min   int16
+	Max   int16
+	Sum   int
+	Count int
+}
 
 func parseLine(s string) (stationName string, measurement int16) {
 	var i int = 0
@@ -35,13 +41,6 @@ func parseLine(s string) (stationName string, measurement int16) {
 	return
 }
 
-type mma struct {
-	Min   int16
-	Max   int16
-	Sum   int
-	Count int
-}
-
 func main() {
 	fh, err := os.Open("measurements.txt")
 	if err != nil {
@@ -65,16 +64,16 @@ func main() {
 				Count: 1,
 			}
 			continue
+		} else {
+			if measurement < v.Min {
+				v.Min = measurement
+			}
+			if measurement > v.Max {
+				v.Max = measurement
+			}
+			v.Sum += int(measurement)
+			v.Count++
 		}
-
-		if measurement < v.Min {
-			v.Min = measurement
-		}
-		if measurement > v.Max {
-			v.Max = measurement
-		}
-		v.Sum += int(measurement)
-		v.Count++
 	}
 	if err := scanner.Err(); err != nil {
 		log.Printf("scanner: %v", err)
@@ -84,9 +83,9 @@ func main() {
 	prefix := "{"
 	for _, stationName := range stations {
 		m := results[stationName]
-		mean := math.Round(float64(m.Sum) / float64(m.Count))
+		mean := float64(m.Sum) / float64(m.Count * 10)
 		fmt.Printf("%s%s=%.1f/%.1f/%.1f", prefix, stationName,
-			float64(m.Min)*0.1, mean*0.1, float64(m.Max)*0.1)
+			float64(m.Min)*0.1, mean, float64(m.Max)*0.1)
 		prefix = ", "
 	}
 	fmt.Println("}")
